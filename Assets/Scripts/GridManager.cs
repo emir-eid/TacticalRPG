@@ -4,10 +4,9 @@ public class GridManager : MonoBehaviour
 {
     [SerializeField] private int _width, _height;
     [SerializeField] private GameObject _tilePrefab;
+    [SerializeField] private Material _tileMaterialLight, _tileMaterialDark;
 
-    // --- YENÝ: Materyal deðiþkenleri ---
-    [SerializeField] private Material _tileMaterialLight;
-    [SerializeField] private Material _tileMaterialDark;
+    private Tile _highlightedTile; // Vurgulanan karoyu hafýzada tutmak için deðiþkenimiz
 
     void Start()
     {
@@ -26,13 +25,48 @@ public class GridManager : MonoBehaviour
                 GameObject spawnedTile = Instantiate(_tilePrefab, new Vector3(xPos, 0, zPos), Quaternion.identity);
                 spawnedTile.name = $"Tile {x} {y}";
 
-                // --- YENÝ: Dama tahtasý mantýðý ---
-                // (x+y) toplamý çift ise açýk, tek ise koyu renk ata.
                 bool isOffset = (x + y) % 2 == 1;
                 Material assignedMaterial = isOffset ? _tileMaterialDark : _tileMaterialLight;
-
-                // Tile objesinin Renderer bileþenini bul ve materyalini ata.
                 spawnedTile.GetComponent<Renderer>().material = assignedMaterial;
+            }
+        }
+    }
+
+    // --- GÜNCELLENEN UPDATE FONKSÝYONU ---
+    void Update()
+    {
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+        if (Physics.Raycast(ray, out RaycastHit hitInfo))
+        {
+            Tile tile = hitInfo.collider.GetComponent<Tile>();
+
+            if (tile != null)
+            {
+                if (_highlightedTile != tile)
+                {
+                    if (_highlightedTile != null)
+                        _highlightedTile.RemoveHighlight();
+
+                    tile.Highlight();
+                    _highlightedTile = tile;
+                }
+            }
+            else
+            {
+                if (_highlightedTile != null)
+                {
+                    _highlightedTile.RemoveHighlight();
+                    _highlightedTile = null;
+                }
+            }
+        }
+        else
+        {
+            if (_highlightedTile != null)
+            {
+                _highlightedTile.RemoveHighlight();
+                _highlightedTile = null;
             }
         }
     }
